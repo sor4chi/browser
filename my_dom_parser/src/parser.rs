@@ -1,46 +1,35 @@
-#[derive(Debug, PartialEq)]
-pub struct ElementData {
-    pub tag_name: String,
-    pub attributes: Vec<(String, String)>,
-}
+use crate::attribute::Attribute;
+use crate::tag::Tag;
+use crate::tokenizer::{Token, Tokenizer};
+use std::collections::HashMap;
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Node {
-    Element(ElementData, Vec<Node>),
+    Element(ElementData),
     Text(String),
 }
 
-pub fn parse(input: &str) -> Node {
-    let mut nodes = vec![];
+#[derive(PartialEq, Debug)]
+pub struct ElementData {
+    pub tag_name: Tag,
+    pub attributes: HashMap<String, String>,
+    pub children: Vec<Node>,
+}
 
-    let mut remaining = input;
-    while let Some(next_opening) = remaining.find('<') {
-        if next_opening > 0 {
-            let text = &remaining[..next_opening];
-            nodes.push(Node::Text(text.to_string()));
-        }
+pub struct Parser<'a> {
+    tokenizer: Tokenizer<'a>,
+}
 
-        remaining = &remaining[next_opening..];
-        if let Some(next_closing) = remaining.find('>') {
-            let tag = &remaining[1..next_closing];
-            nodes.push(Node::Element(
-                ElementData {
-                    tag_name: tag.to_string(),
-                    attributes: vec![],
-                },
-                vec![],
-            ));
-            remaining = &remaining[next_closing + 1..];
+impl Parser<'_> {
+    pub fn new(input: &str) -> Parser {
+        Parser {
+            tokenizer: Tokenizer::new(input),
         }
     }
 
-    Node::Element(
-        ElementData {
-            tag_name: "html".to_string(),
-            attributes: vec![],
-        },
-        nodes,
-    )
+    pub fn parse_nodes(&mut self) -> Result<Vec<Node>, String> {
+        panic!("Not implemented yet");
+    }
 }
 
 #[cfg(test)]
@@ -48,95 +37,34 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_simple_html() {
+    fn test_parser_parse_nodes() {
         let input = r#"<html><head><title>Test Page</title></head><body><h1>Hello, world!</h1></body></html>"#;
-        let expected = Node::Element(
-            ElementData {
-                tag_name: "html".to_string(),
-                attributes: vec![],
-            },
-            vec![
-                Node::Element(
-                    ElementData {
-                        tag_name: "head".to_string(),
-                        attributes: vec![],
-                    },
-                    vec![Node::Element(
-                        ElementData {
-                            tag_name: "title".to_string(),
-                            attributes: vec![],
-                        },
-                        vec![Node::Text("Test Page".to_string())],
-                    )],
-                ),
-                Node::Element(
-                    ElementData {
-                        tag_name: "body".to_string(),
-                        attributes: vec![],
-                    },
-                    vec![Node::Element(
-                        ElementData {
-                            tag_name: "h1".to_string(),
-                            attributes: vec![],
-                        },
-                        vec![Node::Text("Hello, world!".to_string())],
-                    )],
-                ),
+        let expected = vec![Node::Element(ElementData {
+            tag_name: Tag::Html,
+            attributes: HashMap::new(),
+            children: vec![
+                Node::Element(ElementData {
+                    tag_name: Tag::Head,
+                    attributes: HashMap::new(),
+                    children: vec![Node::Element(ElementData {
+                        tag_name: Tag::Title,
+                        attributes: HashMap::new(),
+                        children: vec![Node::Text("Test Page".to_string())],
+                    })],
+                }),
+                Node::Element(ElementData {
+                    tag_name: Tag::Body,
+                    attributes: HashMap::new(),
+                    children: vec![Node::Element(ElementData {
+                        tag_name: Tag::H1,
+                        attributes: HashMap::new(),
+                        children: vec![Node::Text("Hello, world!".to_string())],
+                    })],
+                }),
             ],
-        );
-
-        let result = parse(input);
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_parse_simple_html_with_text() {
-        let input = r#"<html><head><title>Test Page</title></head><body><h1>Hello, world!</h1><p>Some text</p></body></html>"#;
-        let expected = Node::Element(
-            ElementData {
-                tag_name: "html".to_string(),
-                attributes: vec![],
-            },
-            vec![
-                Node::Element(
-                    ElementData {
-                        tag_name: "head".to_string(),
-                        attributes: vec![],
-                    },
-                    vec![Node::Element(
-                        ElementData {
-                            tag_name: "title".to_string(),
-                            attributes: vec![],
-                        },
-                        vec![Node::Text("Test Page".to_string())],
-                    )],
-                ),
-                Node::Element(
-                    ElementData {
-                        tag_name: "body".to_string(),
-                        attributes: vec![],
-                    },
-                    vec![
-                        Node::Element(
-                            ElementData {
-                                tag_name: "h1".to_string(),
-                                attributes: vec![],
-                            },
-                            vec![Node::Text("Hello, world!".to_string())],
-                        ),
-                        Node::Element(
-                            ElementData {
-                                tag_name: "p".to_string(),
-                                attributes: vec![],
-                            },
-                            vec![Node::Text("Some text".to_string())],
-                        ),
-                    ],
-                ),
-            ],
-        );
-
-        let result = parse(input);
-        assert_eq!(result, expected);
+        })];
+        let mut parser = Parser::new(input);
+        let actual = parser.parse_nodes().expect("Failed to parse nodes");
+        assert_eq!(expected, actual);
     }
 }

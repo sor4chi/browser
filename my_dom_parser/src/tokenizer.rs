@@ -8,7 +8,7 @@ pub enum Token {
     Text(String),
 }
 
-struct Tokenizer<'a> {
+pub struct Tokenizer<'a> {
     input: Peekable<std::str::Chars<'a>>,
     position: usize,
 }
