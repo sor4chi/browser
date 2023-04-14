@@ -10,7 +10,7 @@ pub enum Tag {
 }
 
 impl Tag {
-    pub fn from_str(tag: &str) -> Self {
+    pub fn new(tag: &str) -> Self {
         match tag {
             "html" => Self::Html,
             "head" => Self::Head,
